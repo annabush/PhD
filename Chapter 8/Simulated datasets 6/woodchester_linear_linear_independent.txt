@@ -1,0 +1,41 @@
+model {
+  # Set pi
+  pi.m.prior ~ dunif(-(pi.limit[2] - pi.limit[1])/n.time, (pi.limit[2] - pi.limit[1]) / n.time)
+  pi.m <- pi.m.prior
+  pi.c.prior ~ dunif(pi.limit[1] + max(0, - pi.m * (n.time - 1)), pi.limit[2] - max(0, pi.m * (n.time - 1)))
+  pi.c <- pi.c.prior
+  for (t in 1:n.time){
+    pi[t] <- pi.m * (t - 1) + pi.c
+  }
+  
+  # Set se
+  for (i in 1:n.diag){
+    se.m.prior[i] ~ dunif(-(se.limit[2] - se.limit[1])  / (n.time - 1), (se.limit[2] - se.limit[1] ) / (n.time - 1))
+    se.m[i] <- se.m.prior[i]
+    se.c.prior[i] ~ dunif(se.limit[1] + max(0, - se.m[i] * (n.time - 1)), se.limit[2] - max(0, se.m[i] * (n.time - 1)))
+    se.c[i] <- se.c.prior[i]
+      for  (t in 1:n.time){
+    se[i, t] <- se.m[i] * (t - 1) + se.c[i]
+    }
+  }
+  
+  # Set sp
+  for (t in 1:n.time){
+     for (i in 1:n.diag){
+      sp.prior[i, t] ~ dunif(sp.limit[1], sp.limit[2])
+      sp[i, t] <- sp.prior[i, t]
+     }
+  }
+  
+  for (t in 1:n.time){
+    p[1, t] <- pi[t] * (1-se[1, t]) * (1-se[2, t]) * (1-se[3, t]) + (1-pi[t]) * sp[1, t] * sp[2, t] * sp[3, t]
+    p[2, t] <- pi[t] * (1-se[1, t]) * (1-se[2, t]) * se[3, t] + (1-pi[t]) * sp[1, t] * sp[2, t] * (1-sp[3, t])
+    p[3, t] <- pi[t] * (1-se[1, t]) * se[2, t] * (1-se[3, t]) + (1-pi[t]) * sp[1, t] * (1-sp[2, t]) * sp[3, t]
+    p[4, t] <- pi[t] * (1-se[1, t]) * se[2, t] * se[3, t] + (1-pi[t]) * sp[1, t] * (1-sp[2, t]) * (1-sp[3, t])
+    p[5, t] <- pi[t] * se[1, t] * (1-se[2, t]) * (1-se[3, t]) + (1-pi[t]) * (1-sp[1, t]) * sp[2, t] * sp[3, t]
+    p[6, t] <- pi[t] * se[1, t] * (1-se[2, t]) * se[3, t] + (1-pi[t]) * (1-sp[1, t]) * sp[2, t] * (1-sp[3, t])
+    p[7, t] <- pi[t] * se[1, t] * se[2, t] * (1-se[3, t]) + (1-pi[t]) * (1-sp[1, t]) * (1-sp[2, t]) * sp[3, t]
+    p[8, t] <- pi[t] * se[1, t] * se[2, t] * se[3, t] + (1-pi[t]) * (1-sp[1, t]) * (1-sp[2, t]) * (1-sp[3, t])
+    y[t, 1:8] ~ dmulti(p[1:8, t], n[t])
+  }
+}

@@ -1,0 +1,29 @@
+model {
+  # Set pi
+  pi.prior ~ dunif(pi.limit[1], pi.limit[2])
+  pi <- pi.prior
+  
+  # Set se
+  for (i in 1:n.diag){
+    se.prior[i] ~ dunif(se.limit[1], se.limit[2])
+    se[i] <- se.prior[i]
+  }
+  
+  # Set sp
+  for (i in 1:n.diag){
+    sp.prior[i] ~ dunif(sp.limit[1], sp.limit[2])
+    sp[i] <- sp.prior[i]
+  }
+  
+  for (t in 1:n.time){
+    p[1, t] <- pi * (1-se[1]) * (1-se[2]) * (1-se[3]) + (1-pi) * sp[1] * sp[2] * sp[3]
+    p[2, t] <- pi * (1-se[1]) * (1-se[2]) * se[3] + (1-pi) * sp[1] * sp[2] * (1-sp[3])
+    p[3, t] <- pi * (1-se[1]) * se[2] * (1-se[3]) + (1-pi) * sp[1] * (1-sp[2]) * sp[3]
+    p[4, t] <- pi * (1-se[1]) * se[2] * se[3] + (1-pi) * sp[1] * (1-sp[2]) * (1-sp[3])
+    p[5, t] <- pi * se[1] * (1-se[2]) * (1-se[3]) + (1-pi) * (1-sp[1]) * sp[2] * sp[3]
+    p[6, t] <- pi * se[1] * (1-se[2]) * se[3] + (1-pi) * (1-sp[1]) * sp[2] * (1-sp[3])
+    p[7, t] <- pi * se[1] * se[2] * (1-se[3]) + (1-pi) * (1-sp[1]) * (1-sp[2]) * sp[3]
+    p[8, t] <- pi * se[1] * se[2] * se[3] + (1-pi) * (1-sp[1]) * (1-sp[2]) * (1-sp[3])
+    y[t, 1:8] ~ dmulti(p[1:8, t], n)
+  }
+}
